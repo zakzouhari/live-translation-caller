@@ -15,11 +15,24 @@ const PUBLIC_URL = process.env.PUBLIC_URL;
 
 app.use(express.urlencoded({ extended: false }));
 
-// Twilio will hit this when each person answers
+// Twilio hits this when each participant joins
 app.post('/voice', (req, res) => {
   const response = new twilio.twiml.VoiceResponse();
 
-  response.start().stream({ url: TRANSLATION_WS });
+  const callSid = req.body.CallSid || 'unknown';
+  const fromNumber = req.body.From || 'unknown';
+  let participant = 'callerB';
+
+  if (fromNumber === personA) {
+    participant = 'callerA';
+  } else if (fromNumber === personB) {
+    participant = 'callerB';
+  }
+
+  const streamUrl = `${TRANSLATION_WS}?participant=${participant}&sid=${callSid}`;
+  console.log(`🔁 Streaming for ${participant}: ${streamUrl}`);
+
+  response.start().stream({ url: streamUrl });
 
   const dial = response.dial();
   dial.conference('LiveTranslateRoom');
@@ -31,7 +44,6 @@ app.post('/voice', (req, res) => {
 // You visit this to trigger the 3-way call
 app.get('/start-call', async (req, res) => {
   try {
-    // Ensure the URL has no space or trailing slash issues
     const voiceUrl = PUBLIC_URL.replace(/\/+$/, '') + '/voice';
 
     console.log('Calling:', personA, personB);
