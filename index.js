@@ -1,6 +1,5 @@
-import express from 'express';
-import { twiml } from 'twilio';
-import twilio from 'twilio';
+const express = require('express');
+const twilio = require('twilio');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -16,8 +15,10 @@ const PUBLIC_URL = process.env.PUBLIC_URL;
 
 app.use(express.urlencoded({ extended: false }));
 
+// Twilio webhook for each call
 app.post('/voice', (req, res) => {
-  const response = new twiml.VoiceResponse();
+  const response = new twilio.twiml.VoiceResponse();
+
   response.start().stream({ url: TRANSLATION_WS });
 
   const dial = response.dial();
@@ -27,6 +28,7 @@ app.post('/voice', (req, res) => {
   res.send(response.toString());
 });
 
+// Trigger to start 3-way call
 app.get('/start-call', async (req, res) => {
   try {
     await client.calls.create({
@@ -43,7 +45,7 @@ app.get('/start-call', async (req, res) => {
 
     res.send('Calls initiated to both participants!');
   } catch (err) {
-    console.error(err);
+    console.error('Error starting calls:', err.message);
     res.status(500).send('Call initiation failed');
   }
 });
