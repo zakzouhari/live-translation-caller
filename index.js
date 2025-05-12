@@ -15,7 +15,6 @@ const PUBLIC_URL = process.env.PUBLIC_URL;
 
 app.use(express.urlencoded({ extended: false }));
 
-// Twilio will hit this when each person answers
 app.post('/voice', (req, res) => {
   const response = new twilio.twiml.VoiceResponse();
 
@@ -28,25 +27,24 @@ app.post('/voice', (req, res) => {
   res.send(response.toString());
 });
 
-// You visit this to trigger the 3-way call
 app.get('/start-call', async (req, res) => {
   try {
-    console.log('Starting call to:', personA, personB);
+    const voiceUrl = `${PUBLIC_URL}/voice`.trim(); // fix spacing issue
+
+    console.log('Calling:', personA, personB);
+    console.log('Using TwiML URL:', voiceUrl);
 
     const callA = await client.calls.create({
-      url: `${PUBLIC_URL}/voice`,
+      url: voiceUrl,
       to: personA,
       from: process.env.TWILIO_PHONE,
     });
 
     const callB = await client.calls.create({
-      url: `${PUBLIC_URL}/voice`,
+      url: voiceUrl,
       to: personB,
       from: process.env.TWILIO_PHONE,
     });
-
-    console.log('Call A SID:', callA.sid);
-    console.log('Call B SID:', callB.sid);
 
     res.send('Calls initiated to both participants!');
   } catch (err) {
